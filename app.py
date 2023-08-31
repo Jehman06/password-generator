@@ -4,6 +4,7 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
+
 def generate_password(pwd_length):
     letters = string.ascii_letters
     digits = string.digits

@@ -1,23 +1,109 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang='en'>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <link rel='stylesheet' href="{{ url_for('static', filename='style.css') }}">
+    <link rel='stylesheet' href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css">
+    <link rel='stylesheet' href="https://unpkg.com/tippy.js@6.3.1/dist/tippy.css">
+    <link rel='stylesheet' href="https://unpkg.com/tippy.js@6/themes/translucent.css">
+    <script src="https://unpkg.com/@popperjs/core@2/dist/umd/popper.min.js"></script>
+    <script src="https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.js"></script>
     <title>Password Generator</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordElement = document.getElementById('password');
+            const copyIconElement = document.getElementById('copyButton');
+            const generateButtonElement = document.getElementById('generateButton');
+    
+            if (passwordElement && copyIconElement && generateButtonElement) {
+                // Initialize Tippy.js for the copy icon
+                tippy(copyIconElement, {
+                    content: copyIconElement.getAttribute('data-tippy'),
+                    theme: 'translucent'
+                });
+    
+                // Initialize Tippy.js for the generate button
+                tippy(generateButtonElement, {
+                    content: generateButtonElement.getAttribute('data-tippy'),
+                    theme: 'translucent',
+                });
+    
+                copyIconElement.addEventListener('click', function() {
+                    // Create a temporary input element
+                    const tempInput = document.createElement('input');
+                    tempInput.value = passwordElement.textContent;
+                    document.body.appendChild(tempInput);
+    
+                    // Select the text in the input element
+                    tempInput.select();
+                    tempInput.setSelectionRange(0, 99999); // For mobile devices
+    
+                    // Copy the text to the clipboard
+                    document.execCommand('copy');
+    
+                    // Remove the temporary input element
+                    document.body.removeChild(tempInput);
+                });
+    
+                generateButtonElement.addEventListener('click', function() {
+                    // Make an asynchronous request to the /generate-new-password route
+                    fetch('/generate-new-password', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({}), // You can send data if needed
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.password) {
+                                // Update the passwordElement.textContent with the new password
+                                passwordElement.textContent = data.password;
+                            } else if (data.error) {
+                                // Handle errors if necessary
+                                console.error(data.error);
+                            }
+                        })
+                        .catch(error => {
+                            // Handle network errors
+                            console.error(error);
+                        });
+                    });
+
+            }
+        });
+    </script>      
 </head>
 <body>
-    <h1>Password Generator</h1>
-    <form method="post">
-        <label for="length">Password Length:</label>
-        <input type="number" id="length" name="length" required>
-        <button type="submit">Generate Password</button>
-    </form>
-    {% if password %}
-    <h2>Generated Password:</h2>
-    <p>{{ password }}</p>
-    {% endif %}
-    {% if error %}
-    <p style="color: red;">{{ error }}</p>
-    {% endif %}
+    <div class='container'>
+        
+        <div class='generator-container'>
+            <div class='title'>
+                <h1>Password Generator</h1>
+            </div>
+
+            {% if password %}
+            <div class='password'>
+                <div class="password-text" id='password'>{{ password }}</div>
+                <i class="fas fa-copy copy-icon" id="copyButton" data-tippy="Copy to Clipboard" data-tippy-placement="top"></i>
+            </div>
+            {% endif %}
+
+            {% if error %}
+            <div class='error'>
+                <p style='color: red;'><b>{{ error }}</b></p>
+            </div>
+            {% endif %}
+
+            <div class='form'>
+                <form method='post'>
+                    <i class="fas fa-redo-alt" id="generateButton" data-tippy="Generate New Password" data-tippy-placement="top"></i>
+                    <input type='number' id='length' name='length' placeholder='Length' required>
+                    <button type='submit'>Generate Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
